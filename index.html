@@ -27,11 +27,11 @@ html, body {
 <body>
 
 <button id="start" style="
-    font-size: 20px;
+    font-size: 22px;
     padding: 20px;
     cursor: pointer;
 ">
-    Cliquer pour entrer
+    Entrer
 </button>
 
 <img id="scare" src="jumpscare.jpg" alt="scare">
@@ -45,10 +45,18 @@ const btn = document.getElementById("start");
 const img = document.getElementById("scare");
 const sound = document.getElementById("sound");
 
-btn.addEventListener("click", () => {
+btn.addEventListener("click", async () => {
     btn.style.display = "none";
+
+    // passer en plein écran
+    if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+    }
+
+    // afficher l'image
     img.style.display = "block";
 
+    // jouer le son
     sound.currentTime = 0;
     sound.play().catch(() => {});
 });
