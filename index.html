@@ -1,1 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>...</title>
 
+<style>
+html, body {
+    margin: 0;
+    height: 100%;
+    background: black;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#scare {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+}
+</style>
+</head>
+<body>
+
+<button id="start" style="
+    font-size: 20px;
+    padding: 20px;
+    cursor: pointer;
+">
+    Cliquer pour entrer
+</button>
+
+<img id="scare" src="jumpscare.jpg" alt="scare">
+
+<audio id="sound" preload="auto">
+    <source src="scream.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const btn = document.getElementById("start");
+const img = document.getElementById("scare");
+const sound = document.getElementById("sound");
+
+btn.addEventListener("click", () => {
+    btn.style.display = "none";
+    img.style.display = "block";
+
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+});
+</script>
+
+</body>
+</html>
