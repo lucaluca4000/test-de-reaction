@@ -3,97 +3,133 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reaction Test</title>
+<title>Test de temps de réaction</title>
 
 <style>
-html, body {
+body {
     margin: 0;
-    height: 100%;
-    background: black;
-    overflow: hidden;
+    height: 100vh;
+    background: #0b0b0f;
+    font-family: Arial, sans-serif;
+    color: white;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: Arial;
-    color: white;
 }
 
-#btn {
-    padding: 20px 30px;
-    font-size: 22px;
-    cursor: pointer;
-    background: white;
-    color: black;
-    border: none;
-    border-radius: 10px;
-}
-
-#text {
-    font-size: 120px;
-    display: none;
-}
-
-#score {
-    font-size: 40px;
-    margin-top: 20px;
-    display: none;
+/* container */
+#app {
     text-align: center;
+    width: 100%;
 }
 
+/* titre */
+h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+/* zone test */
+#box {
+    width: 320px;
+    height: 320px;
+    margin: 0 auto;
+    background: #1a1a1f;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+    user-select: none;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+/* état vert */
+.green {
+    background: #00c853 !important;
+    color: black;
+}
+
+/* stats */
+#stats {
+    margin-top: 20px;
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+/* screamer */
 #img {
     display: none;
+    position: fixed;
+    inset: 0;
     width: 100vw;
     height: 100vh;
     object-fit: cover;
 }
 
 .shake {
-    animation: shake 0.07s infinite;
+    animation: shake 0.06s infinite;
 }
 
 @keyframes shake {
     0% { transform: translate(0,0); }
-    25% { transform: translate(5px,-3px); }
-    50% { transform: translate(-5px,3px); }
-    75% { transform: translate(3px,5px); }
+    25% { transform: translate(6px,-4px); }
+    50% { transform: translate(-6px,4px); }
+    75% { transform: translate(4px,6px); }
     100% { transform: translate(0,0); }
+}
+
+/* bouton start */
+button {
+    padding: 12px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
 }
 </style>
 </head>
+
 <body>
 
-<button id="btn">Start Reaction Test</button>
+<div id="app">
+    <h1>Test de temps de réaction</h1>
 
-<div id="text">3</div>
-<div id="score"></div>
+    <button id="start">Démarrer</button>
+
+    <div id="box">Clique pour commencer</div>
+
+    <div id="stats">
+        Tour : 0 / 5<br>
+        Moyenne : — ms
+    </div>
+</div>
 
 <img id="img" src="R.jpg">
 
-<audio id="sound" preload="auto">
+<audio id="sound">
     <source src="scream.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-const btn = document.getElementById("btn");
-const text = document.getElementById("text");
-const score = document.getElementById("score");
+const box = document.getElementById("box");
+const startBtn = document.getElementById("start");
+const stats = document.getElementById("stats");
 const img = document.getElementById("img");
 const sound = document.getElementById("sound");
 
-sound.volume = 1.0;
-
-let canClick = false;
-let startTime = 0;
-let timeout;
-
+let state = "idle";
+let startTime;
+let delayTimeout;
 let round = 0;
+let results = [];
 
 /* fullscreen */
 async function fs() {
     try {
-        if (document.documentElement.requestFullscreen) {
-            await document.documentElement.requestFullscreen();
-        }
+        await document.documentElement.requestFullscreen();
     } catch(e) {}
 }
 
@@ -101,89 +137,102 @@ async function fs() {
 function scare() {
     img.style.display = "block";
     document.body.classList.add("shake");
-
     sound.currentTime = 0;
     sound.play().catch(() => {});
 }
 
 /* start */
-btn.addEventListener("click", async () => {
-    btn.style.display = "none";
+startBtn.onclick = async () => {
     await fs();
-
+    startBtn.style.display = "none";
     nextRound();
-});
+};
 
+/* rounds */
 function nextRound() {
     round++;
 
-    text.style.display = "block";
+    if (round > 5) {
+        let avg = Math.round(results.reduce((a,b)=>a+b,0) / results.length);
 
-    if (round === 4) {
-        // 💀 SCREAM ROUND
-        text.textContent = "3";
-
-        let n = 3;
-
-        const countdown = setInterval(() => {
-            n--;
-
-            if (n > 0) {
-                text.textContent = n;
-            } else {
-                clearInterval(countdown);
-
-                text.textContent = "CLICK!";
-
-                setTimeout(() => {
-                    text.style.display = "none";
-                    scare();
-                }, 500);
-            }
-        }, 1000);
-
+        box.textContent = "Test terminé";
+        stats.innerHTML = `
+            Tour : 5 / 5<br>
+            Moyenne : ${avg} ms
+        `;
         return;
     }
 
-    // NORMAL ROUNDS
-    let n = 3;
-    text.textContent = n;
+    state = "waiting";
+    box.classList.remove("green");
+    box.textContent = "Attends le vert...";
 
-    const countdown = setInterval(() => {
-        n--;
+    stats.innerHTML = `
+        Tour : ${round} / 5<br>
+        Moyenne : ${results.length ? Math.round(results.reduce((a,b)=>a+b,0)/results.length) : "—"} ms
+    `;
 
-        if (n > 0) {
-            text.textContent = n;
-        } else {
-            clearInterval(countdown);
+    let delay = Math.random() * 3000 + 1000;
 
-            text.textContent = "Wait...";
+    delayTimeout = setTimeout(() => {
 
-            const delay = Math.random() * 3000 + 1000;
-
-            timeout = setTimeout(() => {
-                text.textContent = "CLICK!";
-                canClick = true;
-                startTime = Date.now();
-            }, delay);
+        /* 💀 ROUND 4 = SCREAM */
+        if (round === 4) {
+            box.textContent = "CLIQUER !";
+            box.classList.add("green");
+            state = "screamReady";
+            startTime = Date.now();
+            return;
         }
-    }, 1000);
+
+        box.textContent = "CLIQUER !";
+        box.classList.add("green");
+
+        state = "ready";
+        startTime = Date.now();
+
+    }, delay);
 }
 
-/* reaction click */
-document.addEventListener("click", () => {
-    if (!canClick) return;
+/* click */
+box.onclick = () => {
 
-    let reaction = Date.now() - startTime;
-    canClick = false;
+    /* trop tôt */
+    if (state === "waiting") {
+        box.textContent = "Trop tôt !";
+        clearTimeout(delayTimeout);
+        setTimeout(nextRound, 1000);
+        return;
+    }
 
-    text.style.display = "none";
+    /* SCREAM ROUND */
+    if (state === "screamReady") {
+        let t = Date.now() - startTime;
+        results.push(t);
 
-    score.style.display = "block";
-    score.textContent = "Temps : " + reaction + " ms";
+        box.textContent = t + " ms";
 
-    setTimeout(nextRound, 1200);
-});
+        setTimeout(() => {
+            scare();
+        }, 800);
+
+        state = "done";
+        setTimeout(nextRound, 1500);
+        return;
+    }
+
+    /* normal */
+    if (state === "ready") {
+        let t = Date.now() - startTime;
+        results.push(t);
+
+        box.classList.remove("green");
+        box.textContent = t + " ms";
+
+        state = "done";
+        setTimeout(nextRound, 1000);
+    }
+};
 </script>
 
 </body>
