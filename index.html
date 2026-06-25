@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>...</title>
+<title>Reaction Test</title>
 
 <style>
 html, body {
@@ -29,13 +29,13 @@ html, body {
     border-radius: 10px;
 }
 
-/* compteur */
+/* texte compteur */
 #count {
-    font-size: 120px;
+    font-size: 140px;
     display: none;
 }
 
-/* image */
+/* image jump scare */
 #img {
     display: none;
     width: 100vw;
@@ -59,7 +59,7 @@ html, body {
 </head>
 <body>
 
-<button id="btn">Démarrer</button>
+<button id="btn">Commencer test</button>
 <div id="count">3</div>
 
 <img id="img" src="R.jpg">
@@ -78,15 +78,12 @@ sound.volume = 1.0;
 
 let running = false;
 
-/* plein écran */
+/* fullscreen */
 async function fs() {
     try {
         const el = document.documentElement;
-
-        if (!document.fullscreenElement) {
-            if (el.requestFullscreen) await el.requestFullscreen();
-            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        }
+        if (el.requestFullscreen) await el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
     } catch(e) {}
 }
 
@@ -99,12 +96,7 @@ function scare() {
     sound.play().catch(() => {});
 }
 
-/* clic = fullscreen */
-document.addEventListener("click", () => {
-    fs();
-});
-
-/* start */
+/* démarrage */
 btn.addEventListener("click", async () => {
     if (running) return;
     running = true;
@@ -117,13 +109,21 @@ btn.addEventListener("click", async () => {
     count.style.display = "block";
 
     const timer = setInterval(() => {
-        count.textContent = n;
-        n--;
+        if (n > 0) {
+            count.textContent = n;
+            n--;
+            return;
+        }
 
-        if (n < 0) {
-            clearInterval(timer);
-            count.style.display = "none";
-            scare();
+        if (n === 0) {
+            count.textContent = "GO!";
+            n--;
+
+            setTimeout(() => {
+                clearInterval(timer);
+                count.style.display = "none";
+                scare();
+            }, 700);
         }
     }, 1000);
 });
