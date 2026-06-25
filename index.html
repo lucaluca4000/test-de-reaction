@@ -43,21 +43,7 @@ html, body {
     object-fit: cover;
 }
 
-/* overlay discret */
-#overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    display: none;
-    z-index: 999;
-    color: white;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    text-align: center;
-}
-
-/* shake plus réaliste */
+/* shake */
 .shake {
     animation: shake 0.07s infinite;
 }
@@ -76,8 +62,6 @@ html, body {
 <button id="btn">Démarrer</button>
 <div id="count">3</div>
 
-<div id="overlay"></div>
-
 <img id="img" src="R.jpg">
 
 <audio id="sound" preload="auto">
@@ -89,13 +73,12 @@ const btn = document.getElementById("btn");
 const count = document.getElementById("count");
 const img = document.getElementById("img");
 const sound = document.getElementById("sound");
-const overlay = document.getElementById("overlay");
 
 sound.volume = 1.0;
 
 let running = false;
 
-/* plein écran compatible */
+/* plein écran */
 async function fs() {
     try {
         const el = document.documentElement;
@@ -116,7 +99,7 @@ function scare() {
     sound.play().catch(() => {});
 }
 
-/* clic = toujours tenter fullscreen */
+/* clic = fullscreen */
 document.addEventListener("click", () => {
     fs();
 });
@@ -143,15 +126,6 @@ btn.addEventListener("click", async () => {
             scare();
         }
     }, 1000);
-});
-
-/* fullscreen exit */
-document.addEventListener("fullscreenchange", () => {
-    if (!document.fullscreenElement && img.style.display === "block") {
-        overlay.style.display = "flex";
-    } else {
-        overlay.style.display = "none";
-    }
 });
 </script>
 
