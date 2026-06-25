@@ -6,52 +6,42 @@
 <title>Reaction Test</title>
 
 <style>
-body {
+html, body {
     margin: 0;
-    height: 100vh;
-    background: #0f0f0f;
+    height: 100%;
+    background: black;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-family: Arial;
     color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
-#container {
-    text-align: center;
-}
-
-button {
-    padding: 15px 25px;
-    font-size: 18px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-#box {
-    width: 300px;
-    height: 300px;
-    margin: 20px auto;
-    background: #222;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+#btn {
+    padding: 20px 30px;
     font-size: 22px;
-    user-select: none;
     cursor: pointer;
+    background: white;
+    color: black;
+    border: none;
+    border-radius: 10px;
 }
 
-.green {
-    background: #00c853 !important;
-    color: black;
+#text {
+    font-size: 120px;
+    display: none;
+}
+
+#score {
+    font-size: 40px;
+    margin-top: 20px;
+    display: none;
+    text-align: center;
 }
 
 #img {
     display: none;
-    position: fixed;
-    inset: 0;
     width: 100vw;
     height: 100vh;
     object-fit: cover;
@@ -68,51 +58,42 @@ button {
     75% { transform: translate(3px,5px); }
     100% { transform: translate(0,0); }
 }
-
-#bonusBtn {
-    display: none;
-    margin-top: 10px;
-    background: red;
-    color: white;
-}
 </style>
 </head>
-
 <body>
 
-<div id="container">
-    <h2>Test de Réaction</h2>
+<button id="btn">Start Reaction Test</button>
 
-    <button id="start">Commencer</button>
-
-    <div id="box">Clique pour commencer</div>
-
-    <button id="bonusBtn">Mode bonus 😈</button>
-</div>
+<div id="text">3</div>
+<div id="score"></div>
 
 <img id="img" src="R.jpg">
 
-<audio id="sound">
+<audio id="sound" preload="auto">
     <source src="scream.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-const box = document.getElementById("box");
-const start = document.getElementById("start");
-const bonusBtn = document.getElementById("bonusBtn");
+const btn = document.getElementById("btn");
+const text = document.getElementById("text");
+const score = document.getElementById("score");
 const img = document.getElementById("img");
 const sound = document.getElementById("sound");
 
-let round = 0;
-let state = "idle";
-let startTime;
+sound.volume = 1.0;
+
+let canClick = false;
+let startTime = 0;
 let timeout;
-let results = [];
+
+let round = 0;
 
 /* fullscreen */
 async function fs() {
     try {
-        await document.documentElement.requestFullscreen();
+        if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+        }
     } catch(e) {}
 }
 
@@ -122,44 +103,88 @@ function scare() {
     document.body.classList.add("shake");
 
     sound.currentTime = 0;
-    sound.volume = 1;
     sound.play().catch(() => {});
 }
 
 /* start */
-start.onclick = async () => {
+btn.addEventListener("click", async () => {
+    btn.style.display = "none";
     await fs();
 
-    start.style.display = "none";
-    results = [];
-    round = 0;
+    nextRound();
+});
 
-    next();
-};
-
-/* next round */
-function next() {
+function nextRound() {
     round++;
 
-    if (round > 5) {
-        let avg = Math.round(results.reduce((a,b)=>a+b,0) / results.length);
-        box.textContent = "Test terminé";
-        box.classList.remove("green");
-        bonusBtn.style.display = "inline-block";
+    text.style.display = "block";
+
+    if (round === 4) {
+        // 💀 SCREAM ROUND
+        text.textContent = "3";
+
+        let n = 3;
+
+        const countdown = setInterval(() => {
+            n--;
+
+            if (n > 0) {
+                text.textContent = n;
+            } else {
+                clearInterval(countdown);
+
+                text.textContent = "CLICK!";
+
+                setTimeout(() => {
+                    text.style.display = "none";
+                    scare();
+                }, 500);
+            }
+        }, 1000);
+
         return;
     }
 
-    state = "waiting";
-    box.classList.remove("green");
-    box.textContent = "Attends le vert...";
+    // NORMAL ROUNDS
+    let n = 3;
+    text.textContent = n;
 
-    let delay = Math.random() * 3000 + 1000;
+    const countdown = setInterval(() => {
+        n--;
 
-    timeout = setTimeout(() => {
+        if (n > 0) {
+            text.textContent = n;
+        } else {
+            clearInterval(countdown);
 
-        /* 💀 ROUND 4 = SCREAM */
-        if (round === 4) {
-            state = "scream";
-            box.textContent = "CLIQUE !";
-            box.classList.add("green");
-           
+            text.textContent = "Wait...";
+
+            const delay = Math.random() * 3000 + 1000;
+
+            timeout = setTimeout(() => {
+                text.textContent = "CLICK!";
+                canClick = true;
+                startTime = Date.now();
+            }, delay);
+        }
+    }, 1000);
+}
+
+/* reaction click */
+document.addEventListener("click", () => {
+    if (!canClick) return;
+
+    let reaction = Date.now() - startTime;
+    canClick = false;
+
+    text.style.display = "none";
+
+    score.style.display = "block";
+    score.textContent = "Temps : " + reaction + " ms";
+
+    setTimeout(nextRound, 1200);
+});
+</script>
+
+</body>
+</html>
