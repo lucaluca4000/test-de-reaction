@@ -1,200 +1,74 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>...</title>
-
-<style>
-html, body {
-    margin: 0;
-    height: 100%;
-    background: black;
-    overflow: hidden;
-    font-family: Arial;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-}
-
-/* bouton */
-#btn {
-    padding: 20px 30px;
-    font-size: 22px;
-    cursor: pointer;
-}
-
-/* compteur */
-#count {
-    font-size: 120px;
-    display: none;
-}
-
-/* image */
-#img {
-    display: none;
-    width: 100vw;
-    height: 100vh;
-    object-fit: cover;
-}
-
-/* flash */
-#flash {
-    position: fixed;
-    inset: 0;
-    background: white;
-    display: none;
-    z-index: 999;
-}
-
-/* glitch overlay */
-#glitch {
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(255,255,255,0.05),
-        rgba(0,0,0,0.05) 2px
-    );
-    display: none;
-    z-index: 998;
-}
-
-/* shake */
-.shake {
-    animation: shake 0.1s infinite;
-}
-
-@keyframes shake {
-    0% { transform: translate(0,0); }
-    25% { transform: translate(4px,4px); }
-    50% { transform: translate(-4px,4px); }
-    75% { transform: translate(4px,-4px); }
-    100% { transform: translate(0,0); }
-}
-</style>
-</head>
-<body>
-
-<button id="btn">Démarrer</button>
-<div id="count">3</div>
-
-<div id="flash"></div>
-<div id="glitch"></div>
-
-<img id="img" src="R.jpg">
-
-<audio id="sound">
-    <source src="scream.mp3" type="audio/mpeg">
-</audio>
-
 <script>
-const btn = document.getElementById("btn");
-const count = document.getElementById("count");
-const img = document.getElementById("img");
-const sound = document.getElementById("sound");
-const flash = document.getElementById("flash");
-const glitch = document.getElementById("glitch");
+let isFullscreenRequested = false;
 
-sound.volume = 1.0;
-
-// fullscreen safe
-async function enterFS() {
+// entrer en plein écran (compatible max navigateurs)
+async function goFullscreen() {
     try {
-        if (document.documentElement.requestFullscreen) {
-            await document.documentElement.requestFullscreen();
+        const el = document.documentElement;
+
+        if (el.requestFullscreen) {
+            await el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen(); // Safari
+        } else if (el.msRequestFullscreen) {
+            el.msRequestFullscreen(); // vieux Edge/IE
         }
-    } catch(e) {}
+
+        isFullscreenRequested = true;
+    } catch (e) {
+        console.log("Fullscreen bloqué :", e);
+    }
 }
 
-// si utilisateur sort du fullscreen → on ne spam pas, on propose juste retour
-document.addEventListener("fullscreenchange", () => {
-    if (!document.fullscreenElement && img.style.display === "block") {
-        // petit rappel discret
-        btn.style.display = "block";
-        btn.textContent = "Revenir en plein écran";
+// clic → plein écran (une seule fois proprement)
+document.addEventListener("click", () => {
+    if (!document.fullscreenElement) {
+        goFullscreen();
     }
 });
 
-btn.addEventListener("click", async () => {
-    btn.style.display = "none";
+// détection sortie plein écran
+document.addEventListener("fullscreenchange", handleExit);
+document.addEventListener("webkitfullscreenchange", handleExit);
 
-    await enterFS();
-
-    let n = 3;
-    count.style.display = "block";
-
-    const timer = setInterval(() => {
-        count.textContent = n;
-        n--;
-
-        if (n < 0) {
-            clearInterval(timer);
-
-            count.style.display = "none";
-
-            // glitch phase
-            glitch.style.display = "block";
-
-            setTimeout(() => {
-                glitch.style.display = "none";
-                flash.style.display = "block";
-
-                setTimeout(() => {
-                    flash.style.display = "none";
-
-                    img.style.display = "block";
-                    document.body.classList.add("shake");
-
-                    sound.currentTime = 0;
-                    sound.play().catch(() => {});
-                }, 200);
-            }, 400);
-        }
-    }, 1000);
-});
- <!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fullscreen Click</title>
-
-<style>
-html, body {
-    margin: 0;
-    height: 100%;
-    background: black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-family: Arial;
+function handleExit() {
+    if (!document.fullscreenElement && isFullscreenRequested) {
+        showFullscreenButton();
+    } else {
+        removeFullscreenButton();
+    }
 }
 
-#msg {
-    font-size: 24px;
+// bouton de retour fullscreen (design propre + unique)
+function showFullscreenButton() {
+    if (document.getElementById("fsbtn")) return;
+
+    const btn = document.createElement("button");
+    btn.id = "fsbtn";
+    btn.textContent = "🔳 Revenir en plein écran";
+
+    Object.assign(btn.style, {
+        position: "fixed",
+        top: "20px",
+        left: "20px",
+        zIndex: "9999",
+        padding: "12px 16px",
+        fontSize: "16px",
+        background: "black",
+        color: "white",
+        border: "1px solid white",
+        cursor: "pointer",
+        borderRadius: "8px"
+    });
+
+    btn.addEventListener("click", goFullscreen);
+
+    document.body.appendChild(btn);
 }
-</style>
-</head>
-<body>
 
-<div id="msg">Clique n'importe où pour passer en plein écran</div>
-
-<script>
-async function goFullscreen() {
-    try {
-        if (document.documentElement.requestFullscreen) {
-            await document.documentElement.requestFullscreen();
-        }
-    } catch (e) {}
+// supprimer bouton si fullscreen actif
+function removeFullscreenButton() {
+    const btn = document.getElementById("fsbtn");
+    if (btn) btn.remove();
 }
-
-document.addEventListener("click", () => {
-    goFullscreen();
-});   
 </script>
-
-</body>
-</html>
