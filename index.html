@@ -154,6 +154,46 @@ btn.addEventListener("click", async () => {
         }
     }, 1000);
 });
+ <!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fullscreen Click</title>
+
+<style>
+html, body {
+    margin: 0;
+    height: 100%;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-family: Arial;
+}
+
+#msg {
+    font-size: 24px;
+}
+</style>
+</head>
+<body>
+
+<div id="msg">Clique n'importe où pour passer en plein écran</div>
+
+<script>
+async function goFullscreen() {
+    try {
+        if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+        }
+    } catch (e) {}
+}
+
+document.addEventListener("click", () => {
+    goFullscreen();
+});   
 </script>
 
 </body>
