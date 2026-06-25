@@ -6,158 +6,184 @@
 <title>Reaction Test</title>
 
 <style>
-body {
+html, body {
     margin: 0;
-    height: 100vh;
-    background: #0f0f0f;
-    font-family: Arial;
-    color: white;
+    height: 100%;
+    background: black;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
+    font-family: Arial;
+    color: white;
 }
 
-/* container */
-#app {
+#btn {
+    padding: 20px 30px;
+    font-size: 22px;
+    cursor: pointer;
+    background: white;
+    color: black;
+    border: none;
+    border-radius: 10px;
+}
+
+#text {
+    font-size: 120px;
+    display: none;
+}
+
+#score {
+    font-size: 40px;
+    margin-top: 20px;
+    display: none;
     text-align: center;
 }
 
-/* bouton */
-button {
-    padding: 15px 25px;
-    font-size: 18px;
-    border: none;
-    cursor: pointer;
-    border-radius: 8px;
-    background: white;
-    color: black;
-    margin: 10px;
+#img {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
 }
 
-/* zone test */
-#box {
-    width: 300px;
-    height: 300px;
-    background: #222;
-    margin: 20px auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    border-radius: 10px;
-    user-select: none;
+.shake {
+    animation: shake 0.07s infinite;
 }
 
-/* stats */
-#stats {
-    margin-top: 20px;
-    font-size: 18px;
-    opacity: 0.9;
+@keyframes shake {
+    0% { transform: translate(0,0); }
+    25% { transform: translate(5px,-3px); }
+    50% { transform: translate(-5px,3px); }
+    75% { transform: translate(3px,5px); }
+    100% { transform: translate(0,0); }
 }
 </style>
 </head>
-
 <body>
 
-<div id="app">
+<button id="btn">Start Reaction Test</button>
 
-    <h1>Test de Réaction</h1>
+<div id="text">3</div>
+<div id="score"></div>
 
-    <button id="startBtn">Commencer</button>
+<img id="img" src="R.jpg">
 
-    <div id="box">Clique pour commencer</div>
-
-    <div id="stats">
-        Moyenne : — ms <br>
-        Meilleur : — ms <br>
-        Tour : 0 / 5
-    </div>
-
-</div>
+<audio id="sound" preload="auto">
+    <source src="scream.mp3" type="audio/mpeg">
+</audio>
 
 <script>
-const box = document.getElementById("box");
-const startBtn = document.getElementById("startBtn");
-const stats = document.getElementById("stats");
+const btn = document.getElementById("btn");
+const text = document.getElementById("text");
+const score = document.getElementById("score");
+const img = document.getElementById("img");
+const sound = document.getElementById("sound");
 
-let state = "idle";
-let startTime;
+sound.volume = 1.0;
+
+let canClick = false;
+let startTime = 0;
 let timeout;
+
 let round = 0;
-let results = [];
 
-/* démarrer test */
-startBtn.onclick = () => {
-    round = 0;
-    results = [];
+/* fullscreen */
+async function fs() {
+    try {
+        if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+        }
+    } catch(e) {}
+}
+
+/* screamer */
+function scare() {
+    img.style.display = "block";
+    document.body.classList.add("shake");
+
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+}
+
+/* start */
+btn.addEventListener("click", async () => {
+    btn.style.display = "none";
+    await fs();
+
     nextRound();
-};
+});
 
-/* round */
 function nextRound() {
-    if (round >= 5) {
-        endTest();
-        return;
-    }
-
-    state = "waiting";
-    box.style.background = "#222";
-    box.textContent = "Attends le vert...";
     round++;
 
-    stats.innerHTML = `
-        Moyenne : — ms <br>
-        Meilleur : — ms <br>
-        Tour : ${round} / 5
-    `;
+    text.style.display = "block";
 
-    let delay = Math.random() * 3000 + 1000;
+    if (round === 4) {
+        // 💀 SCREAM ROUND
+        text.textContent = "3";
 
-    timeout = setTimeout(() => {
-        box.style.background = "green";
-        box.textContent = "CLIQUER !";
+        let n = 3;
 
-        state = "ready";
-        startTime = Date.now();
-    }, delay);
-}
+        const countdown = setInterval(() => {
+            n--;
 
-/* clic zone */
-box.onclick = () => {
+            if (n > 0) {
+                text.textContent = n;
+            } else {
+                clearInterval(countdown);
 
-    if (state === "waiting") {
-        box.textContent = "Trop tôt !";
-        clearTimeout(timeout);
-        setTimeout(nextRound, 1000);
+                text.textContent = "CLICK!";
+
+                setTimeout(() => {
+                    text.style.display = "none";
+                    scare();
+                }, 500);
+            }
+        }, 1000);
+
         return;
     }
 
-    if (state === "ready") {
-        let reaction = Date.now() - startTime;
-        results.push(reaction);
+    // NORMAL ROUNDS
+    let n = 3;
+    text.textContent = n;
 
-        box.textContent = reaction + " ms";
+    const countdown = setInterval(() => {
+        n--;
 
-        state = "show";
+        if (n > 0) {
+            text.textContent = n;
+        } else {
+            clearInterval(countdown);
 
-        setTimeout(nextRound, 1200);
-    }
-};
+            text.textContent = "Wait...";
 
-/* fin */
-function endTest() {
-    let avg = Math.round(results.reduce((a,b)=>a+b,0) / results.length);
-    let best = Math.min(...results);
+            const delay = Math.random() * 3000 + 1000;
 
-    box.style.background = "#222";
-    box.textContent = "Test terminé";
-
-    stats.innerHTML = `
-        Moyenne : ${avg} ms <br>
-        Meilleur : ${best} ms <br>
-        Résultats : ${results.join(" / ")} ms
-    `;
+            timeout = setTimeout(() => {
+                text.textContent = "CLICK!";
+                canClick = true;
+                startTime = Date.now();
+            }, delay);
+        }
+    }, 1000);
 }
+
+/* reaction click */
+document.addEventListener("click", () => {
+    if (!canClick) return;
+
+    let reaction = Date.now() - startTime;
+    canClick = false;
+
+    text.style.display = "none";
+
+    score.style.display = "block";
+    score.textContent = "Temps : " + reaction + " ms";
+
+    setTimeout(nextRound, 1200);
+});
 </script>
 
 </body>
